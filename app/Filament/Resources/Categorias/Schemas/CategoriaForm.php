@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Categorias\Schemas;
 
+use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Schema;
 
 class CategoriaForm
