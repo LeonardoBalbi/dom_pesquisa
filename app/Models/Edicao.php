@@ -1,22 +1,30 @@
 <?php
+
 // app/Models/Edicao.php
 
 namespace App\Models;
 
+use App\Http\Controllers\EdicaoPublicController;
+use App\Observers\EdicaoObserver;
+use App\Services\PdfTextoIndexavel;
 use Illuminate\Database\Eloquent\Model;
-use Spatie\Activitylog\Traits\LogsActivity;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
 use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
 
 /**
  * Rastreamento do texto exibido na busca pública (ex.: trecho com "JOSE CLAUDIO", PNCP):
  *
- * 1. Coluna `conteudo_indexado`: ao salvar o PDF no Nova, {@see \App\Observers\EdicaoObserver} chama
- *    {@see \App\Services\PdfTextoIndexavel} (Smalot\PdfParser, equivalente a getText()) e grava o texto extraído.
- * 2. Filtro na home: {@see \App\Http\Controllers\EdicaoPublicController::index()} — `numero_edicao LIKE` ou
+ * 1. Coluna `conteudo_indexado`: ao salvar o PDF no Nova, {@see EdicaoObserver} chama
+ *    {@see PdfTextoIndexavel} (Smalot\PdfParser, equivalente a getText()) e grava o texto extraído.
+ * 2. Filtro na home: {@see EdicaoPublicController::index()} — `numero_edicao LIKE` ou
  *    `MATCH(conteudo_indexado, palavras_chave) AGAINST` (índice FULLTEXT do Laravel; o PHP legado usava só `conteudo_indexado` se o índice permitir).
  * 3. Trecho na lista: {@see gerarSnippetDestacado()} (porta `gerarSnippet()` de `doeca/config.php`).
  *
- * @see \App\Http\Controllers\EdicaoPublicController::index() View `doeca.inicio`.
+ * @see EdicaoPublicController::index() View `doeca.inicio`.
  */
 class Edicao extends Model
 {
@@ -25,6 +33,7 @@ class Edicao extends Model
     protected $table = 'edicoes';
 
     protected $fillable = [
+        'categoria_id',
         'numero_edicao',
         'data_publicacao',
         'arquivo_path',
@@ -35,6 +44,11 @@ class Edicao extends Model
     protected $casts = [
         'data_publicacao' => 'date',
     ];
+
+    public function categoria(): BelongsTo
+    {
+        return $this->belongsTo(Categoria::class);
+    }
 
     // ── Busca (equivalente a doeca/index.php: LIKE no número OU FULLTEXT no conteúdo) ─
     public function scopeBusca($query, string $termo)
@@ -51,13 +65,45 @@ class Edicao extends Model
     // ── Caminho absoluto do arquivo ────────────────────────────────────────
     public function getCaminhoAbsolutoAttribute(): string
     {
-        return storage_path('app/uploads/' . $this->arquivo_path);
+        return storage_path('app/uploads/'.$this->arquivo_path);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────
     public static function gerarCaminhoRelativo(string $nomeArquivo): string
     {
-        return now()->format('Y/m') . '/' . $nomeArquivo;
+        return now()->format('Y/m').'/'.$nomeArquivo;
+    }
+
+    /**
+     * Pasta relativa no disco `uploads`: `{slug-da-categoria}/{ano}/{mês}/`.
+     * O slug vem do nome da categoria; sem categoria usa `sem_categoria`. Ano e mês vêm da data de publicação.
+     * Os diretórios são criados automaticamente ao gravar o arquivo (ex. {@see UploadedFile::store}).
+     *
+     * @param  mixed  $dataPublicacao  Valor de `data_publicacao` (Carbon, string ou null → data atual).
+     */
+    public static function diretorioUploadRelativo(?int $categoriaId, mixed $dataPublicacao): string
+    {
+        $data = match (true) {
+            $dataPublicacao instanceof Carbon => $dataPublicacao->copy(),
+            $dataPublicacao instanceof \DateTimeInterface => Carbon::parse($dataPublicacao->format('Y-m-d')),
+            $dataPublicacao !== null && $dataPublicacao !== '' => Carbon::parse((string) $dataPublicacao),
+            default => Carbon::now(),
+        };
+
+        $ym = $data->format('Y/m');
+
+        if ($categoriaId) {
+            $nome = Categoria::query()->whereKey($categoriaId)->value('nome');
+            $slug = Str::slug((string) $nome, '-');
+            $slug = mb_substr($slug, 0, 80);
+            if ($slug === '') {
+                $slug = 'categoria-'.$categoriaId;
+            }
+        } else {
+            $slug = 'sem_categoria';
+        }
+
+        return $slug.'/'.$ym;
     }
 
     /**
@@ -152,7 +198,7 @@ class Edicao extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['numero_edicao', 'data_publicacao', 'arquivo_path'])
-            ->setDescriptionForEvent(fn(string $event) => "Edição {$this->numero_edicao} foi {$event}");
+            ->logOnly(['categoria_id', 'numero_edicao', 'data_publicacao', 'arquivo_path'])
+            ->setDescriptionForEvent(fn (string $event) => "Edição {$this->numero_edicao} foi {$event}");
     }
 }

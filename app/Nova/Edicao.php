@@ -2,17 +2,27 @@
 
 namespace App\Nova;
 
+use App\Models\Edicao as EdicaoModel;
+use Illuminate\Http\Resources\MergeValue;
+use Laravel\Nova\Actions\Action;
+use Laravel\Nova\Card;
+use Laravel\Nova\Fields\BelongsTo;
 use Laravel\Nova\Fields\Date;
+use Laravel\Nova\Fields\Field;
 use Laravel\Nova\Fields\File;
 use Laravel\Nova\Fields\ID;
 use Laravel\Nova\Fields\Number;
 use Laravel\Nova\Fields\Text;
 use Laravel\Nova\Fields\Textarea;
+use Laravel\Nova\Filters\Filter;
 use Laravel\Nova\Http\Requests\NovaRequest;
+use Laravel\Nova\Lenses\Lens;
+use Laravel\Nova\Panel;
+use Laravel\Nova\ResourceTool;
 
 class Edicao extends Resource
 {
-    public static $model = \App\Models\Edicao::class;
+    public static $model = EdicaoModel::class;
 
     public static $title = 'numero_edicao';
 
@@ -23,12 +33,17 @@ class Edicao extends Resource
     public static $group = 'DOECA';
 
     /**
-     * @return array<int, \Laravel\Nova\Fields\Field|\Laravel\Nova\Panel|\Laravel\Nova\ResourceTool|\Illuminate\Http\Resources\MergeValue>
+     * @return array<int, Field|Panel|ResourceTool|MergeValue>
      */
     public function fields(NovaRequest $request): array
     {
         return [
             ID::make()->sortable(),
+
+            BelongsTo::make('Categoria', 'categoria', Categoria::class)
+                ->nullable()
+                ->sortable()
+                ->searchable(),
 
             Text::make('Número da edição', 'numero_edicao')
                 ->sortable()
@@ -40,11 +55,26 @@ class Edicao extends Resource
 
             File::make('PDF da Edição', 'arquivo_path')
                 ->disk('uploads')
-                ->path(now()->format('Y/m'))
                 ->acceptedTypes('.pdf')
                 ->rules('required', 'file', 'mimes:pdf')
                 ->prunable()
-                ->help('Selecione o arquivo PDF da edição para upload.'),
+                ->store(function (NovaRequest $request, $model, string $attribute, string $requestAttribute, ?string $disk, ?string $storageDir): array {
+                    $file = $request->file($requestAttribute);
+                    if (! $file?->isValid()) {
+                        return [];
+                    }
+
+                    $categoriaId = $model->categoria_id ?? $request->input('categoria');
+                    $categoriaId = $categoriaId !== null && $categoriaId !== '' ? (int) $categoriaId : null;
+
+                    $dataPub = $model->data_publicacao ?? $request->input('data_publicacao');
+
+                    $dir = EdicaoModel::diretorioUploadRelativo($categoriaId, $dataPub);
+                    $path = $file->store($dir, $disk ?? 'uploads');
+
+                    return [$attribute => $path];
+                })
+                ->help('O PDF é salvo em uploads/{categoria}/{ano}/{mês}/ conforme a categoria e a data de publicação (pastas criadas automaticamente).'),
 
             Text::make('Palavras-chave', 'palavras_chave')
                 ->nullable()
@@ -63,7 +93,7 @@ class Edicao extends Resource
     }
 
     /**
-     * @return array<int, \Laravel\Nova\Card>
+     * @return array<int, Card>
      */
     public function cards(NovaRequest $request): array
     {
@@ -71,7 +101,7 @@ class Edicao extends Resource
     }
 
     /**
-     * @return array<int, \Laravel\Nova\Filters\Filter>
+     * @return array<int, Filter>
      */
     public function filters(NovaRequest $request): array
     {
@@ -79,7 +109,7 @@ class Edicao extends Resource
     }
 
     /**
-     * @return array<int, \Laravel\Nova\Lenses\Lens>
+     * @return array<int, Lens>
      */
     public function lenses(NovaRequest $request): array
     {
@@ -87,7 +117,7 @@ class Edicao extends Resource
     }
 
     /**
-     * @return array<int, \Laravel\Nova\Actions\Action>
+     * @return array<int, Action>
      */
     public function actions(NovaRequest $request): array
     {
