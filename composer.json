@@ -1,7 +1,12 @@
 {
     "name": "doeca/doeca-laravel",
-    "description": "Diário Oficial Eletrônico de Código Aberto — Laravel 11 + Livewire 3",
-    "keywords": ["laravel", "diario-oficial", "governo", "transparencia"],
+    "description": "Di\u00e1rio Oficial Eletr\u00f4nico de C\u00f3digo Aberto \u2014 Laravel 11 + Livewire 3",
+    "keywords": [
+        "laravel",
+        "diario-oficial",
+        "governo",
+        "transparencia"
+    ],
     "license": "MIT",
     "repositories": [
         {
@@ -11,8 +16,9 @@
     ],
     "require": {
         "php": "^8.2",
+        "filament/filament": "^4.11",
+        "inertiajs/inertia-laravel": "^3.1",
         "laravel/framework": "*",
-        "laravel/nova": "^5.0",
         "laravel/tinker": "^2.9",
         "livewire/livewire": "^3.5",
         "smalot/pdfparser": "^2.0",
@@ -41,7 +47,8 @@
     "scripts": {
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
-            "@php artisan package:discover --ansi"
+            "@php artisan package:discover --ansi",
+            "@php artisan filament:upgrade"
         ],
         "post-update-cmd": [
             "@php artisan vendor:publish --tag=laravel-assets --ansi --force"

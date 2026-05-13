@@ -7,8 +7,10 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Panel;
 
-class User extends Authenticatable
+class User extends Authenticatable implements FilamentUser
 {
     use Notifiable, LogsActivity;
 
@@ -33,5 +35,9 @@ class User extends Authenticatable
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()->logOnly(['name', 'email', 'nivel']);
+    }
+    public function canAccessPanel(Panel $panel): bool
+    {
+        return true; // No ambiente local, permitimos acesso. Em produção você pode filtrar por isAdmin()
     }
 }
