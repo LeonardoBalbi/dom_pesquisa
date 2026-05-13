@@ -56,7 +56,9 @@ class Edicao extends Resource
             File::make('PDF da Edição', 'arquivo_path')
                 ->disk('uploads')
                 ->acceptedTypes('.pdf')
-                ->rules('required', 'file', 'mimes:pdf')
+                ->rules('file', 'mimes:pdf')
+                ->creationRules('required')
+                ->nullable()
                 ->prunable()
                 ->store(function (NovaRequest $request, $model, string $attribute, string $requestAttribute, ?string $disk, ?string $storageDir): array {
                     $file = $request->file($requestAttribute);
@@ -67,14 +69,25 @@ class Edicao extends Resource
                     $categoriaId = $model->categoria_id ?? $request->input('categoria');
                     $categoriaId = $categoriaId !== null && $categoriaId !== '' ? (int) $categoriaId : null;
 
-                    $dataPub = $model->data_publicacao ?? $request->input('data_publicacao');
+                    $dataPubStr = $model->data_publicacao ?? $request->input('data_publicacao');
+                    $dir = EdicaoModel::diretorioUploadRelativo($categoriaId, $dataPubStr);
 
-                    $dir = EdicaoModel::diretorioUploadRelativo($categoriaId, $dataPub);
-                    $path = $file->store($dir, $disk ?? 'uploads');
+                    // --- Gerar nome amigável do arquivo ---
+                    $numero = $model->numero_edicao ?? $request->input('numero_edicao');
+                    $dataObj = \Illuminate\Support\Carbon::parse($dataPubStr);
+                    
+                    $categoriaNome = 'sem-categoria';
+                    if ($categoriaId) {
+                        $categoriaNome = \App\Models\Categoria::whereKey($categoriaId)->value('nome') ?? 'categoria-'.$categoriaId;
+                    }
+
+                    $fileName = \Illuminate\Support\Str::slug($categoriaNome . '-' . $numero . '-' . $dataObj->format('d-m-Y')) . '.pdf';
+                    
+                    $path = $file->storeAs($dir, $fileName, $disk ?? 'uploads');
 
                     return [$attribute => $path];
                 })
-                ->help('O PDF é salvo em uploads/{categoria}/{ano}/{mês}/ conforme a categoria e a data de publicação (pastas criadas automaticamente).'),
+                ->help('O PDF é salvo em uploads/{categoria}/{ano}/{mês-por-extenso}/ conforme a categoria e a data de publicação (pastas criadas automaticamente).'),
 
             Text::make('Palavras-chave', 'palavras_chave')
                 ->nullable()

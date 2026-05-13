@@ -71,7 +71,8 @@ class Edicao extends Model
     // ── Helpers ───────────────────────────────────────────────────────────
     public static function gerarCaminhoRelativo(string $nomeArquivo): string
     {
-        return now()->format('Y/m').'/'.$nomeArquivo;
+        $mes = Str::slug(now()->translatedFormat('F'));
+        return now()->format('Y').'/'.$mes.'/'.$nomeArquivo;
     }
 
     /**
@@ -90,7 +91,9 @@ class Edicao extends Model
             default => Carbon::now(),
         };
 
-        $ym = $data->format('Y/m');
+        $ano = $data->year;
+        $mes = Str::slug($data->translatedFormat('F'));
+        $ym = "{$ano}/{$mes}";
 
         if ($categoriaId) {
             $nome = Categoria::query()->whereKey($categoriaId)->value('nome');
