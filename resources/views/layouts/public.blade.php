@@ -35,20 +35,23 @@
 <body>
     <header class="bg-white border-bottom py-3 mb-4">
         <div class="container d-flex flex-column flex-md-row justify-content-between align-items-center">
-            <div>
-                <p class="text-uppercase text-muted small mb-0 fw-bold" style="letter-spacing: 0.05em;">Diário Oficial Eletrônico</p>
-                <h1 class="h3 mb-0 fw-semibold text-dark">
-                    {{ config('doeca.municipio', 'Município') }}
-                    <span class="text-muted fw-normal">— {{ config('doeca.estado', 'PR') }}</span>
-                </h1>
+            <div class="d-flex align-items-center">
+                <img src="{{ asset('images/logo_governo_azul.png') }}" alt="Logo" class="me-3" style="max-height: 100px; width: 200px;">
+                <div>
+                    <!-- <p class="text-uppercase text-muted small mb-0 fw-bold" style="letter-spacing: 0.05em;">Diário Oficial Eletrônico</p> -->
+                    <h1 class="h3 mb-0 fw-semibold text-dark">
+                        <!-- {{ config('doeca.municipio', 'Município') }} -->
+                        <!-- <span class="text-muted fw-normal">— {{ config('doeca.estado', 'PR') }}</span> -->
+                    </h1>
+                </div>
             </div>
             <div class="mt-3 mt-md-0">
                 @auth
-                    <a href="{{ route('dashboard') }}" class="btn btn-link text-decoration-none text-dark fw-medium">Área logada</a>
+                    <!-- <a href="{{ route('dashboard') }}" class="btn btn-link text-decoration-none text-dark fw-medium">Área logada</a> -->
                 @else
                     <a href="{{ route('login') }}" class="btn btn-dark px-4 py-2 me-2">Entrar</a>
                 @endauth
-                <a href="/nova" class="btn btn-outline-secondary px-4 py-2">Administração</a>
+                <a href="/admin" class="btn btn-outline-secondary px-4 py-2">Administração</a>
             </div>
         </div>
     </header>

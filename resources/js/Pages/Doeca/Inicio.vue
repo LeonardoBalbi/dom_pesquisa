@@ -38,9 +38,12 @@ function buscar() {
                 class="mx-auto flex max-w-5xl flex-col gap-4 px-4 py-6 sm:flex-row sm:items-center sm:justify-between"
             >
                 <div>
-                    <p class="text-xs font-medium uppercase tracking-wide text-slate-500">
-                        Diário Oficial Eletrônico
-                    </p>
+                    <div class="flex items-center gap-3 mb-2">
+                        <img src="/images/logo_governo_azul.png" alt="Logo" class="h-10 w-auto">
+                        <p class="text-xs font-medium uppercase tracking-wide text-slate-500">
+                            Diário Oficial Eletrônico
+                        </p>
+                    </div>
                     <h1 class="text-2xl font-semibold text-slate-900">
                         {{ doeca?.municipio ?? 'Município' }}
                         <span
@@ -68,10 +71,10 @@ function buscar() {
                         </Link>
                     </template>
                     <a
-                        href="/nova"
+                        href="/admin"
                         class="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
                     >
-                        Administração (Nova)
+                        Administração
                     </a>
                 </div>
             </div>

@@ -3,7 +3,7 @@
 return [
     'municipio' => env('DOECA_MUNICIPIO', 'Prefeitura Municipal'),
     'estado' => env('DOECA_ESTADO', 'PR'),
-    'rodape' => env('DOECA_RODAPE', 'Feito com ❤ para o serviço público'),
+    'rodape' => env('DOECA_RODAPE', 'Secretaria de Ciência Tecnologia e Inovação  '),
 
     'turnstile' => [
         'site_key' => env('TURNSTILE_SITE_KEY', ''),

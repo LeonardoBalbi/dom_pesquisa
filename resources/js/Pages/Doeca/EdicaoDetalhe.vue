@@ -22,10 +22,10 @@ defineProps({
                     ← Voltar ao diário
                 </Link>
                 <a
-                    href="/nova"
+                    href="/admin"
                     class="text-sm text-slate-500 hover:text-slate-800"
                 >
-                    Nova
+                    Administração
                 </a>
             </div>
         </header>
